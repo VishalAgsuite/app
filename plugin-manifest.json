@@ -1,0 +1,67 @@
+{
+    "connectors": [
+        {
+            "connectionLinkName": "getdataforsearch",
+            "userAccess": false,
+            "sharedBy": "60008685375",
+            "scope": [
+                "ZohoCRM.modules.all",
+                "ZohoCRM.users.ALL",
+                "ZohoCRM.settings.ALL",
+                "ZohoCRM.modules.contacts.WRITE",
+                "ZohoCRM.modules.contacts.CREATE",
+                "ZohoCRM.modules.contacts.READ"
+            ],
+            "connectionName": "Get Data For Search",
+            "serviceName": "zoho_crm",
+            "isUserDefinedService": false
+        },
+        {
+            "connectionLinkName": "ticketconnection",
+            "userAccess": false,
+            "sharedBy": "60008685375",
+            "scope": [
+                "Desk.contacts.CREATE",
+                "Desk.contacts.DELETE",
+                "Desk.contacts.READ",
+                "Desk.contacts.UPDATE",
+                "Desk.search.READ",
+                "Desk.tickets.CREATE",
+                "Desk.tickets.DELETE",
+                "Desk.tickets.READ",
+                "Desk.tickets.UPDATE"
+            ],
+            "connectionName": "Ticket Connection",
+            "serviceName": "zoho_desk",
+            "isUserDefinedService": false
+        }
+    ],
+    "zohoAuthorisation": {},
+    "whiteListedDomains": [
+        "https://desk.zoho.in",
+        "https://www.zohoapis.in"
+    ],
+    "moduleSupport": true,
+    "service": "DESK",
+    "cspDomains": {
+        "connect-src": []
+    },
+    "storage": false,
+    "locale": [
+        "en"
+    ],
+    "type": "org",
+    "config": [],
+    "modules": {
+        "widgets": [
+            {
+                "name": "Search Details",
+                "icon": "/app/img/icon.png",
+                "logo": "/app/img/logo.png",
+                "location": "desk.ticket.form.rightpanel",
+                "url": "/app/widget.html"
+            }
+        ],
+        "events": []
+    }
+}

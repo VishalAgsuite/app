@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Search Data - Dashboard</title>
+    <!-- https://fontawesome.com/ -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <!-- https://getbootstrap.com/ -->
+    <link rel="stylesheet" href="css/templatemo-style.css">
+
+    <script src="https://js.zohostatic.com/support/developer_sdk/v1/js/ZohoDeskClientSDK.min.js"></script>
+
+
+    <script src="./js/widgets.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <div class="loader-main">
+        <div class="centered">
+            <div id="loader"></div>
+        </div>
+    </div>
+    <div class="container tm-mt-big tm-mb-big m-0 p-0 formdiv">
+        <div class="row">
+            <div class="col-xl-9 col-lg-10 col-md-12 col-sm-12 mx-auto">
+                <div class="tm-bg-primary-dark tm-block tm-block-h-auto p-2">
+                    <div class="row">
+                        <div class="col-12">
+                            <h2 class="tm-block-title d-inline-block">Search by</h2>
+                        </div>
+                    </div>
+                    <div class="row tm-edit-product-row">
+                        <div class="col-md-12">
+                            <form class="tm-edit-product-form">
+                                <div class="form-group mb-3">
+                                    <label class="radio-inline">
+                                            <input name="searchby" value="foliono" type="radio" required="" checked> Folio Number
+                                        </label>
+                                    <label class="radio-inline">
+                                            <input name="searchby" value="email" type="radio" required=""> Email
+                                        </label>
+                                    <label class="radio-inline">
+                                            <input name="searchby" value="pan" type="radio" required=""> PAN Number
+                                        </label>
+                                    <label class="radio-inline">
+                                            <input name="searchby" value="phone" type="radio" required=""> Phone
+                                        </label>
+                                    <!-- <label class="radio-inline">
+                                            <input name="searchby" value="accountno" type="radio" required=""> Bank Number
+                                        </label> -->
+                                </div>
+                                <div class="form-group mb-3">
+                                    <div id="forFolio" class="searchmainbox">
+                                        <label for="foliono">Enter Folio number</label>
+                                        <input id="foliono" name="foliono" type="text" class="form-control">
+                                    </div>
+                                    <div id="forEmail" class="searchmainbox" style="display:none;">
+                                        <label for="email">Enter Email</label>
+                                        <input id="email" name="email" type="text" class="form-control">
+                                    </div>
+                                    <div id="forPAN" class="searchmainbox" style="display:none;">
+                                        <label for="pan">Enter Pan Number</label>
+                                        <input id="pan" name="pan" type="text" class="form-control">
+                                    </div>
+                                    <div id="forMobile" class="searchmainbox" style="display:none;">
+                                        <label for="phone">Enter Phone Number</label>
+                                        <input id="phone" name="phone" type="text" class="form-control">
+                                    </div>
+
+                                    <!-- <div id="forBankAccount" class="searchmainbox" style="display:none;">
+                                            <label for="accountno">Enter Bank Account Number</label>
+                                            <input id="accountno" name="accountno" type="text" class="form-control">
+                                        </div> -->
+                                </div>
+                                <div class="form-group mb-3">
+                                    <button class="btn btn-primary btn-block text-uppercase" id="searchclick">Search</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="foliosearchdiv" style="display: none;">
+        <div class="col-xl-9 col-lg-10 col-md-12 col-sm-12 mx-auto p-2">
+            <div class="tm-bg-primary-dark tm-block-h-auto p-0 pt-2">
+                <div class="row align-items-center">
+                    <div class="col d-flex justify-content-between align-items-center">
+                        <h2 class="tm-block-title d-inline-block pt-2 m-0" style="font-size: 16px; padding-top:10px;">Folio Details</h2>
+                        <div class="button-container d-flex">
+                            <button class="btn btn-small btn-primary me-2" id="updateTicket">Insert Data</button>
+                            <button id="backButton" class="btn btn-primary btn-small">Back</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row tm-edit-product-row">
+            <div class="col-md-12">
+                <div class="table-responsive container-fluid p-0" style="overflow-x: auto;">
+                    <table id="myTable" class="table table-striped table-bordered" style="width:400px">
+                        <thead>
+                            <tr>
+                                <td></td>
+                                <td>FolioNo</td>
+                                <td>Name</td>
+                                <td>FundName</td>
+                            </tr>
+                        </thead>
+                        <tbody id='emailfillhere'></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tabhide">
+        <span id="deskContactID"></span>
+        <span id="currentDepartmentID"></span>
+        <span id="onPage"></span>
+    </div>
+    <div id="errorTab" class="text-center tabhide mt-4">
+        <div class="alert alert-danger" id="innerErrorTab" role="alert"></div>
+    </div>
+    <div id="successTab" class="text-center tabhide mt-4">
+        <div class="alert alert-success" id="innerSuccessTab" role="alert"></div>
+    </div>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <!-- https://jquery.com/download/ -->
+    <script src="js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // $("#updateTicket").before('<button id="backButton" class="btn btn-primary" style="margin-right: 10px;">Back</button>');
+
+            if (window.location.href.indexOf('edit') > 0) {
+                console.log("The URL contains ?book");
+            }
+        });
+        $(document).on('click', '#searchclick', function(e) {
+            e.preventDefault();
+            $('.loader-main').show();
+            var searchby = $("input[name='searchby']:checked").val();
+            if (searchby == 'foliono') {
+                var folioNo = $("#foliono").val();
+                var reqObj = {
+                    url: 'https://www.zohoapis.in/crm/v2/Deals/search?criteria=((Folio_Number:equals:' + folioNo + '))',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: {},
+                    type: 'GET',
+                    postBody: {},
+                    connectionLinkName: "getdataforsearch"
+                }
+                ZOHODESK.request(reqObj).then(function(response) {
+                    var json1 = JSON.parse(response);
+                    var finalJSON = JSON.parse(json1.response);
+                    // alert('sds');
+                    if (!finalJSON.statusMessage.data || finalJSON.statusMessage.data.length === 0) {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                        return;
+                    }
+                    var folioCRMID = finalJSON.statusMessage.data[0].id;
+                    var reqtransationObj = {
+                        url: 'https://www.zohoapis.in/crm/v2/Deals/' + folioCRMID + '/Transaction_Details1',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        data: {},
+                        type: 'GET',
+                        postBody: {},
+                        connectionLinkName: "getdataforsearch"
+                    }
+                    ZOHODESK.request(reqtransationObj).then(function(response) {
+                        var json4 = JSON.parse(response);
+                        var finalJSON4 = JSON.parse(json4.response);
+                        var allTransationData = finalJSON4.statusMessage.data;
+                        var $el = $("#myTable tbody");
+                        $el.empty();
+                        if (allTransationData && allTransationData.length != 0) {
+                            $.each(allTransationData, function(key, obj) {
+                                var $tr = $('<tr>').append(
+                                    $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
+                                    $('<td>').text(obj.Folio.name),
+                                    $('<td>').text(obj.Applicant_1.name),
+                                    $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
+                                );
+                                $el.append($tr);
+                                setTimeout(function() {
+                                    $('.foliosearchdiv').show();
+                                    $('.loader-main').hide();
+                                    $('.formdiv').hide();
+                                    $("#errorTab").hide();
+                                }, 1000);
+                            });
+                        } else {
+                            $("#innerErrorTab").text("No Data Found!");
+                            $('.foliosearchdiv').hide();
+                            $('.loader-main').hide();
+                            $("#errorTab").show();
+                        }
+                    }).catch(function(err) {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $("#errorTab").show();
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        console.log(err);
+                    });
+                }).catch(function(err) {
+                    $("#innerErrorTab").text("Folio number not found! Please try with valid Folio Number.");
+                    $("#errorTab").show();
+                    $('.loader-main').hide();
+                    console.log(err);
+
+                });
+            } else if (searchby == 'email') {
+                var email = $("#email").val();
+                var reqObj = {
+                    url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1_Email:equals:' + email + '))',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: {},
+                    type: 'GET',
+                    postBody: {},
+                    connectionLinkName: "getdataforsearch"
+                }
+                ZOHODESK.request(reqObj).then(function(response) {
+                    var json4 = JSON.parse(response);
+                    var finalJSON4 = JSON.parse(json4.response);
+                    var allTransationData = finalJSON4.statusMessage.data;
+                    var $el = $("#myTable tbody");
+                    $el.empty();
+                    if (allTransationData && allTransationData.length != 0) {
+                        $.each(allTransationData, function(key, obj) {
+                            var $tr = $('<tr>').append(
+                                $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
+                                $('<td>').text(obj.Folio.name),
+                                $('<td>').text(obj.Applicant_1.name),
+                                $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
+                            );
+                            $el.append($tr);
+                            setTimeout(function() {
+                                $('.foliosearchdiv').show();
+                                $('.loader-main').hide();
+                                $('.formdiv').hide();
+                                $("#errorTab").hide();
+                            }, 1000);
+                        });
+                    } else {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                    }
+                }).catch(function(err) {
+                    $("#innerErrorTab").text("Valid transaction data against this email is not found!");
+                    $('.foliosearchdiv').hide();
+                    $('.loader-main').hide();
+                    $("#errorTab").show();
+                    console.log(err);
+
+                });
+            } else if (searchby == 'pan') {
+                var pan = $("#pan").val();
+                var reqObj = {
+                    url: 'https://www.zohoapis.in/crm/v2/Contacts/search?criteria=((PAN_Number:equals:' + pan + '))',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: {},
+                    type: 'GET',
+                    postBody: {},
+                    connectionLinkName: "getdataforsearch"
+                }
+                ZOHODESK.request(reqObj).then(function(response) {
+                    var json4 = JSON.parse(response);
+                    var finalJSON4 = JSON.parse(json4.response);
+                    if (!finalJSON4.statusMessage.data || finalJSON4.statusMessage.data.length === 0) {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                        return;
+                    }
+                    var contactID = finalJSON4.statusMessage.data[0].id;
+                    var reqObj5 = {
+                        url: 'https://www.zohoapis.in/crm/v2/Contacts/' + contactID + '/Related_Transaction_Details',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        data: {},
+                        type: 'GET',
+                        postBody: {},
+                        connectionLinkName: "getdataforsearch"
+                    }
+                    ZOHODESK.request(reqObj5).then(function(response) {
+                        var json5 = JSON.parse(response);
+                        var finalJSON5 = JSON.parse(json5.response);
+                        var allTransationData = finalJSON5.statusMessage.data;
+                        var $el = $("#myTable tbody");
+                        $el.empty();
+                        if (allTransationData && allTransationData.length != 0) {
+                            $.each(allTransationData, function(key, obj) {
+                                var $tr = $('<tr>').append(
+                                    $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
+                                    $('<td>').text(obj.Folio.name),
+                                    $('<td>').text(obj.Applicant_1.name),
+                                    $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
+                                );
+                                $el.append($tr);
+                                setTimeout(function() {
+                                    $('.foliosearchdiv').show();
+                                    $('.loader-main').hide();
+                                    $('.formdiv').hide();
+                                    $("#errorTab").hide();
+                                }, 1000);
+                            });
+                        } else {
+                            $("#innerErrorTab").text("No Data Found!");
+                            $('.foliosearchdiv').hide();
+                            $('.loader-main').hide();
+                            $("#errorTab").show();
+                        }
+                    }).catch(function(err) {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                        console.log(err);
+                    });
+                }).catch(function(err) {
+                    $("#innerErrorTab").text("Valid transaction data against this PAN is not found!");
+                    $('.foliosearchdiv').hide();
+                    $('.loader-main').hide();
+                    $("#errorTab").show();
+                    console.log(err);
+                });
+            } else if (searchby == 'phone') {
+                var phone = $("#phone").val();
+                // alert(phone);
+                var reqObj = {
+                    url: 'https://www.zohoapis.in/crm/v2/Contacts/search?criteria=((Mobile:equals:' + phone + '))',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: {},
+                    type: 'GET',
+                    postBody: {},
+                    connectionLinkName: "getdataforsearch"
+                }
+                ZOHODESK.request(reqObj).then(function(response) {
+                    var json4 = JSON.parse(response);
+                    var finalJSON4 = JSON.parse(json4.response);
+                    var allContact = finalJSON4.statusMessage.data;
+                    if (allContact && allContact.length != 0) {
+                        var $el = $("#myTable tbody");
+                        $el.empty();
+                        $.each(allContact, function(ckey, cobj) {
+                            var reqObj5 = {
+                                url: 'https://www.zohoapis.in/crm/v2/Contacts/' + cobj.id + '/Related_Transaction_Details',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                data: {},
+                                type: 'GET',
+                                postBody: {},
+                                connectionLinkName: "getdataforsearch"
+                            }
+                            ZOHODESK.request(reqObj5).then(function(response) {
+                                var json5 = JSON.parse(response);
+                                var finalJSON5 = JSON.parse(json5.response);
+                                var allTransationData = finalJSON5.statusMessage.data;
+                                console.log(allTransationData);
+                                if (allTransationData && allTransationData.length != 0) {
+                                    $.each(allTransationData, function(key, obj) {
+                                        var $tr = $('<tr>').append(
+                                            $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
+                                            $('<td>').text(obj.Folio.name),
+                                            $('<td>').text(obj.Applicant_1.name),
+                                            $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
+                                        );
+                                        $el.append($tr);
+                                        setTimeout(function() {
+                                            $('.foliosearchdiv').show();
+                                            $('.loader-main').hide();
+                                            $('.formdiv').hide();
+                                            $("#errorTab").hide();
+                                        }, 1000);
+                                    });
+                                } else {
+                                    $("#innerErrorTab").text("No Data Found!");
+                                    $('.foliosearchdiv').hide();
+                                    $('.loader-main').hide();
+                                    $("#errorTab").show();
+                                }
+                            }).catch(function(err) {
+                                $("#innerErrorTab").text("No Data Found!");
+                                $('.foliosearchdiv').hide();
+                                $('.loader-main').hide();
+                                $("#errorTab").show();
+                                console.log(err);
+
+                            });
+                        });
+                    } else {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                    }
+                }).catch(function(err) {
+                    $("#innerErrorTab").text("Valid transaction data against this phone number is not found!");
+                    $('.foliosearchdiv').hide();
+                    $('.loader-main').hide();
+                    $("#errorTab").show();
+                    console.log(err);
+                });
+            } else if (searchby == 'accountno') {
+                var accountno = $("#accountno").val();
+                var reqObj = {
+                    url: 'https://www.zohoapis.in/crm/v2/Contacts/search?criteria=((Bank_Account_Number:equals:' + accountno + '))',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: {},
+                    type: 'GET',
+                    postBody: {},
+                    connectionLinkName: "getdataforsearch"
+                }
+                ZOHODESK.request(reqObj).then(function(response) {
+                    var json4 = JSON.parse(response);
+                    var finalJSON4 = JSON.parse(json4.response);
+                    var allContact = finalJSON4.statusMessage.data;
+                    // var contactID = finalJSON4.statusMessage.data[0].id;
+                    if (allContact && allContact.length != 0) {
+                        var $el = $("#myTable tbody");
+                        $el.empty();
+                        $.each(allContact, function(ckey, cobj) {
+                            var reqObj5 = {
+                                url: 'https://www.zohoapis.in/crm/v2/Contacts/' + cobj.id + '/Related_Transaction_Details',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                data: {},
+                                type: 'GET',
+                                postBody: {},
+                                connectionLinkName: "getdataforsearch"
+                            }
+                            ZOHODESK.request(reqObj5).then(function(response) {
+                                var json5 = JSON.parse(response);
+                                var finalJSON5 = JSON.parse(json5.response);
+                                var allTransationData = finalJSON5.statusMessage.data;
+                                console.log(allTransationData);
+                                if (allTransationData && allTransationData.length != 0) {
+                                    $.each(allTransationData, function(key, obj) {
+                                        var $tr = $('<tr>').append(
+                                            $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
+                                            $('<td>').text(obj.Folio.name),
+                                            $('<td>').text(obj.Applicant_1.name),
+                                            $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
+                                        );
+                                        $el.append($tr);
+                                        setTimeout(function() {
+                                            $('.foliosearchdiv').show();
+                                            $('.loader-main').hide();
+                                            $('.formdiv').hide();
+                                            $("#errorTab").hide();
+                                        }, 1000);
+
+                                    });
+                                } else {
+                                    $("#innerErrorTab").text("No Data Found!");
+                                    $('.foliosearchdiv').hide();
+                                    $('.loader-main').hide();
+                                    $("#errorTab").show();
+                                }
+                            }).catch(function(err) {
+                                $("#innerErrorTab").text("No Data Found!");
+                                $('.foliosearchdiv').hide();
+                                $('.loader-main').hide();
+                                $("#errorTab").show();
+                                console.log(err);
+
+                            });
+                        });
+                    } else {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                    }
+                }).catch(function(err) {
+                    $("#innerErrorTab").text("Valid transaction data against this bank account number is not found!");
+                    $('.foliosearchdiv').hide();
+                    $('.loader-main').hide();
+                    $("#errorTab").show();
+                    console.log(err);
+
+                });
+            }
+        });
+        $('#backButton').click(function() {
+            // e.preventDefault();
+            console.log("Back Button Clicked");
+            $('.foliosearchdiv').hide();
+            $('.formdiv').show();
+            $("#foliono").val('');
+            $('#email').val('');
+            $("#pan").val('');
+            $('#phone').val('');
+            $("#accountno").val('');
+        });
+
+        // Show error popup instead of alert
+        function showErrorPopup(message) {
+            $('.loader-main').hide();
+
+            $('body').append(`
+            <div class="popup-error" id="errorPopup">
+                <div class="popup-content">
+                    <p>${message}</p>
+                    <button id="popupClose">Close</button>
+                </div>
+            </div>
+        `);
+
+            $('#popupClose').click(function() {
+                console.log("Error Clicked Again");
+                $('#errorPopup').remove();
+                $("input[name='selectedTransactionDetails']:checked").prop('checked', false);
+                // e.preventDefault();
+                // $('.foliosearchdiv').hide();
+                // $('.formdiv').show();
+                // history.back();
+            });
+        }
+
+        // ... existing code ...
+
+        $('#updateTicket').click(function(e) {
+            e.preventDefault();
+            // $('#errorPopup').remove();
+            $('.loader-main').show();
+            var onPage = $("#onPage").text();
+            var CRMContactID = $("input[name='selectedTransactionDetails']:checked").val();
+            var folioNumber = $("input[name='selectedTransactionDetails']:checked").attr("attrFolio");
+            var attrFundName = $("input[name='selectedTransactionDetails']:checked").attr("attrFundName");
+            var attrFundType = $("input[name='selectedTransactionDetails']:checked").attr("attrFundType");
+
+            var appReqUbj = {
+                url: 'https://www.zohoapis.in/crm/v2/Contacts/' + CRMContactID,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: {},
+                type: 'GET',
+                postBody: {},
+                connectionLinkName: "getdataforsearch"
+            }
+
+            ZOHODESK.request(appReqUbj).then(function(response) {
+                var json2 = JSON.parse(response);
+                var finalJSON2 = JSON.parse(json2.response);
+                var contactDATA = finalJSON2.statusMessage.data[0];
+                var email = contactDATA.Email;
+                if (email == null) {
+                    showErrorPopup("No Email Associated with this contact, Please update in CRM");
+                    return;
+                } else if (email.match(/\+\d+@/)) {
+                    email = email.replace(/\+\d+@/, '@');
+                }
+                var reqObj25 = {
+                    url: 'https://desk.zoho.in/api/v1/contacts/search?limit=1&email=' + email,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'orgId': '60008685375'
+                    },
+                    data: {},
+                    type: 'GET',
+                    postBody: {},
+                    connectionLinkName: "ticketconnection"
+                }
+                var deskContactID = '';
+                ZOHODESK.request(reqObj25).then(function(response) {
+                    var json3 = JSON.parse(response);
+                    var finalJSON3 = JSON.parse(json3.response);
+                    if (finalJSON3.statusMessage != "") {
+                        var deskContactID = finalJSON3.statusMessage.data[0].id;
+                        $("#deskContactID").text(deskContactID);
+                    }
+                });
+
+                setTimeout(function() {
+                    if (onPage == 'addpage') {
+                        $("#innerSuccessTab").html("Success! Your data will Insert in the field");
+                        $("#successTab").show();
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").hide();
+                        if (email.match(/\+\d+@/)) {
+                            email = email.replace(/\+\d+@/, '@');
+                        }
+                        ZOHODESK.set("ticketForm.cf_pan_number", {
+                            value: contactDATA.PAN_Number
+                        });
+                        ZOHODESK.set("ticketForm.cf_fund_name", {
+                            value: attrFundName
+                        });
+                        ZOHODESK.set("ticketForm.cf_plan_type", {
+                            value: attrFundType
+                        });
+                        ZOHODESK.set("ticketForm.cf_register_email", {
+                            value: email
+                        });
+                        ZOHODESK.set("ticketForm.cf_register_phone", {
+                            value: contactDATA.Mobile
+                        });
+                        ZOHODESK.set("ticketForm.contactId", {
+                            value: $("#deskContactID").text()
+                        });
+                        ZOHODESK.set("ticketForm.cf_related_to", {
+                            value: 'Investor'
+                        });
+                        ZOHODESK.set("ticketForm.cf_folio_no", {
+                            value: folioNumber
+                        });
+                        ZOHODESK.set("ticketForm.phone", {
+                            value: contactDATA.Mobile
+                        });
+                    } else {
+                        $("#innerSuccessTab").html("Success! Your data will Insert in the field");
+                        $("#successTab").show();
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").hide();
+                        ZOHODESK.set("ticketForm.cf_folio_no", {
+                            value: folioNumber
+                        });
+                        ZOHODESK.set("ticketForm.cf_pan_number", {
+                            value: contactDATA.PAN_Number
+                        });
+                        ZOHODESK.set("ticketForm.cf_fund_name", {
+                            value: attrFundName
+                        });
+                        ZOHODESK.set("ticketForm.cf_plan_type", {
+                            value: attrFundType
+                        });
+                        ZOHODESK.set("ticketForm.cf_register_email", {
+                            value: contactDATA.Email
+                        });
+                        ZOHODESK.set("ticketForm.cf_register_phone", {
+                            value: contactDATA.Mobile
+                        });
+                    }
+                }, 2000);
+            }).catch(function(err) {
+                showErrorPopup("Please select 1 Folio to insert");
+                console.log('Error');
+                console.log(err);
+            });
+        });
+        $('input[name=searchby]').change(function() {
+            if (this.value == 'foliono') {
+                $(".searchmainbox").hide();
+                $("#forFolio").show();
+
+            } else if (this.value == 'email') {
+                $(".searchmainbox").hide();
+                $("#forEmail").show();
+            } else if (this.value == 'pan') {
+                $(".searchmainbox").hide();
+                $("#forPAN").show();
+            } else if (this.value == 'phone') {
+                $(".searchmainbox").hide();
+                $("#forMobile").show();
+            } else if (this.value == 'accountno') {
+                $(".searchmainbox").hide();
+                $("#forBankAccount").show();
+            }
+        });
+    </script>
+</body>
+<style type="text/css">
+    .loader-main,
+    .tabhide,
+    .btn-hide {
+        display: none;
+    }
+    
+    .list-group li {
+        padding-left: 8px;
+    }
+    
+    .jsonbtn {
+        float: right;
+    }
+    
+    .loader-main {
+        width: 100%;
+        height: 100vh;
+        position: absolute;
+        z-index: 999;
+        background: #33333347;
+    }
+    
+    #loader {
+        margin: 100px auto;
+        width: 50px;
+        height: 50px;
+        border: 6px solid #fff;
+        border-top: 6px solid #000;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        /*background-color: #fff;*/
+        text-align: center;
+        line-height: 120px;
+    }
+    
+    .centered {
+        position: fixed;
+        top: 47%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    .popup-error {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .popup-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    
+    #popupClose {
+        margin-top: 10px;
+    }
+    
+    .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    
+    .btn-small {
+        padding: 5px 10px;
+        font-size: 12px;
+        margin-left: 10px;
+    }
+</style>
+
+</html>
