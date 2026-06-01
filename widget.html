@@ -151,20 +151,20 @@
                 headers: { 'Content-Type': 'application/json' },
                 data: {}, type: 'GET', postBody: {}, connectionLinkName: "getdataforsearch"
             };
-            
+
             ZOHODESK.request(reqObj).then(function (response) {
                 var j = JSON.parse(response);
                 var fj = JSON.parse(j.response);
                 var deals = fj.statusMessage ? fj.statusMessage.data : (fj.data ? fj.data : []);
                 console.log("[DEBUG] Deals found:", deals);
-                
+
                 if (deals && deals.length > 0) {
                     var $el = $("#myTable tbody");
                     $el.empty();
                     var transactionsFound = 0;
                     var requestsCompleted = 0;
-                    
-                    $.each(deals, function(index, dealObj) {
+
+                    $.each(deals, function (index, dealObj) {
                         var dealID = dealObj.id;
                         console.log("[DEBUG] Fetching Transactions for Deal ID:", dealID);
                         var reqTransObj = {
@@ -172,14 +172,14 @@
                             headers: { 'Content-Type': 'application/json' },
                             data: {}, type: 'GET', postBody: {}, connectionLinkName: "getdataforsearch"
                         };
-                        
-                        ZOHODESK.request(reqTransObj).then(function(transResponse) {
+
+                        ZOHODESK.request(reqTransObj).then(function (transResponse) {
                             requestsCompleted++;
                             var jTrans = JSON.parse(transResponse);
                             var fjTrans = JSON.parse(jTrans.response);
                             var transData = fjTrans.statusMessage ? fjTrans.statusMessage.data : (fjTrans.data ? fjTrans.data : []);
                             console.log("[DEBUG] Transactions for Deal " + dealID + ":", transData);
-                            
+
                             if (transData && transData.length > 0) {
                                 $.each(transData, function (key, obj) {
                                     transactionsFound++;
@@ -188,7 +188,7 @@
                                     var folioName = (obj.Folio && obj.Folio.name) ? obj.Folio.name : (dealObj.Folio_Number || dealObj.Deal_Name || 'N/A');
                                     var app1Name = (obj.Applicant_1 && obj.Applicant_1.name) ? obj.Applicant_1.name : 'N/A';
                                     var app1Id = (obj.Applicant_1 && obj.Applicant_1.id) ? obj.Applicant_1.id : contactID;
-                                    
+
                                     var $tr = $('<tr>').append(
                                         $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + app1Id + '" attrFolio="' + folioName + '" attrFundName="' + fundName + '" attrFundType="' + planType + '">'),
                                         $('<td>').text(folioName),
@@ -198,7 +198,7 @@
                                     $el.append($tr);
                                 });
                             }
-                            
+
                             if (requestsCompleted === deals.length) {
                                 if (transactionsFound > 0) {
                                     setTimeout(function () {
@@ -214,7 +214,7 @@
                                     $("#errorTab").show();
                                 }
                             }
-                        }).catch(function(err) {
+                        }).catch(function (err) {
                             requestsCompleted++;
                             console.error("[DEBUG] Error fetching transactions for deal " + dealID, err);
                             if (requestsCompleted === deals.length && transactionsFound === 0) {
@@ -265,7 +265,10 @@
                 }
                 ZOHODESK.request(reqObj).then(function (response) {
                     var json1 = JSON.parse(response);
+                    console.log(json1);
+
                     var finalJSON = JSON.parse(json1.response);
+                    console.log(finalJSON);
                     // alert('sds');
                     if (!finalJSON.statusMessage || !finalJSON.statusMessage.data || finalJSON.statusMessage.data.length === 0) {
                         throw new Error("No data found");
@@ -338,7 +341,7 @@
                 ZOHODESK.request(reqObj).then(function (response) {
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
-                    
+
                     if (!finalJSON4.statusMessage || !finalJSON4.statusMessage.data || finalJSON4.statusMessage.data.length === 0) {
                         throw new Error("No data found");
                     }
@@ -491,10 +494,16 @@
 
         $('#updateTicket').click(function (e) {
             e.preventDefault();
+            var CRMContactID = $("input[name='selectedTransactionDetails']:checked").val();
+            
+            if (!CRMContactID) {
+                showErrorPopup("Please select 1 Folio to insert");
+                return;
+            }
+            
             // $('#errorPopup').remove();
             $('.loader-main').show();
             var onPage = $("#onPage").text();
-            var CRMContactID = $("input[name='selectedTransactionDetails']:checked").val();
             var folioNumber = $("input[name='selectedTransactionDetails']:checked").attr("attrFolio");
             var attrFundName = $("input[name='selectedTransactionDetails']:checked").attr("attrFundName");
             var attrFundType = $("input[name='selectedTransactionDetails']:checked").attr("attrFundType");
