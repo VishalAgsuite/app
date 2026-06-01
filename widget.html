@@ -142,6 +142,104 @@
                 console.log("The URL contains ?book");
             }
         });
+
+        // Function to fetch Deals (Folios) for a Contact, and then fetch the Transactions for those Deals
+        function fetchTransactionsByContactId(contactID) {
+            var reqObj = {
+                url: 'https://www.zohoapis.in/crm/v2/Deals/search?criteria=((Applicant_1:equals:' + contactID + '))',
+                headers: { 'Content-Type': 'application/json' },
+                data: {}, type: 'GET', postBody: {}, connectionLinkName: "getdataforsearch"
+            };
+            
+            ZOHODESK.request(reqObj).then(function (response) {
+                var j = JSON.parse(response);
+                var fj = JSON.parse(j.response);
+                var deals = fj.statusMessage ? fj.statusMessage.data : (fj.data ? fj.data : []);
+                
+                if (deals && deals.length > 0) {
+                    var $el = $("#myTable tbody");
+                    $el.empty();
+                    var transactionsFound = 0;
+                    var requestsCompleted = 0;
+                    
+                    $.each(deals, function(index, dealObj) {
+                        var dealID = dealObj.id;
+                        var reqTransObj = {
+                            url: 'https://www.zohoapis.in/crm/v2/Deals/' + dealID + '/Transaction_Details1',
+                            headers: { 'Content-Type': 'application/json' },
+                            data: {}, type: 'GET', postBody: {}, connectionLinkName: "getdataforsearch"
+                        };
+                        
+                        ZOHODESK.request(reqTransObj).then(function(transResponse) {
+                            requestsCompleted++;
+                            var jTrans = JSON.parse(transResponse);
+                            var fjTrans = JSON.parse(jTrans.response);
+                            var transData = fjTrans.statusMessage ? fjTrans.statusMessage.data : (fjTrans.data ? fjTrans.data : []);
+                            
+                            if (transData && transData.length > 0) {
+                                $.each(transData, function (key, obj) {
+                                    transactionsFound++;
+                                    var fundName = (obj.Fund_Name && obj.Fund_Name.name) ? obj.Fund_Name.name : 'N/A';
+                                    var planType = obj.Plan_Type ? obj.Plan_Type : 'N/A';
+                                    var folioName = (obj.Folio && obj.Folio.name) ? obj.Folio.name : (dealObj.Folio_Number || dealObj.Deal_Name || 'N/A');
+                                    var app1Name = (obj.Applicant_1 && obj.Applicant_1.name) ? obj.Applicant_1.name : 'N/A';
+                                    var app1Id = (obj.Applicant_1 && obj.Applicant_1.id) ? obj.Applicant_1.id : contactID;
+                                    
+                                    var $tr = $('<tr>').append(
+                                        $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + app1Id + '" attrFolio="' + folioName + '" attrFundName="' + fundName + '" attrFundType="' + planType + '">'),
+                                        $('<td>').text(folioName),
+                                        $('<td>').text(app1Name),
+                                        $('<td style="cursor: pointer;" title="Plan : ' + planType + '">').text(fundName)
+                                    );
+                                    $el.append($tr);
+                                });
+                            }
+                            
+                            if (requestsCompleted === deals.length) {
+                                if (transactionsFound > 0) {
+                                    setTimeout(function () {
+                                        $('.foliosearchdiv').show();
+                                        $('.loader-main').hide();
+                                        $('.formdiv').hide();
+                                        $("#errorTab").hide();
+                                    }, 1000);
+                                } else {
+                                    $("#innerErrorTab").text("No Data Found! The Contact has Deals, but no Transactions.");
+                                    $('.foliosearchdiv').hide();
+                                    $('.loader-main').hide();
+                                    $("#errorTab").show();
+                                }
+                            }
+                        }).catch(function(err) {
+                            requestsCompleted++;
+                            if (requestsCompleted === deals.length && transactionsFound === 0) {
+                                $("#innerErrorTab").text("No Data Found! Could not load Transactions for these Deals.");
+                                $('.foliosearchdiv').hide();
+                                $('.loader-main').hide();
+                                $("#errorTab").show();
+                            } else if (requestsCompleted === deals.length) {
+                                setTimeout(function () {
+                                    $('.foliosearchdiv').show();
+                                    $('.loader-main').hide();
+                                    $('.formdiv').hide();
+                                    $("#errorTab").hide();
+                                }, 1000);
+                            }
+                        });
+                    });
+                } else {
+                    $("#innerErrorTab").text("No Data Found! The Contact has no Deals (Folios) in CRM.");
+                    $('.foliosearchdiv').hide();
+                    $('.loader-main').hide();
+                    $("#errorTab").show();
+                }
+            }).catch(function (err) {
+                $("#innerErrorTab").text("Failed to fetch Deals for this Contact.");
+                $('.foliosearchdiv').hide();
+                $('.loader-main').hide();
+                $("#errorTab").show();
+            });
+        }
         $(document).on('click', '#searchclick', function (e) {
             e.preventDefault();
             $('.loader-main').show();
@@ -221,7 +319,7 @@
             } else if (searchby == 'email') {
                 var email = $("#email").val();
                 var reqObj = {
-                    url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1_Email:equals:' + email + '))',
+                    url: 'https://www.zohoapis.in/crm/v2/Contacts/search?criteria=((Email:equals:' + email + '))',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -233,38 +331,18 @@
                 ZOHODESK.request(reqObj).then(function (response) {
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
-                    var allTransationData = finalJSON4.statusMessage.data;
-                    var $el = $("#myTable tbody");
-                    $el.empty();
-                    if (allTransationData && allTransationData.length != 0) {
-                        $.each(allTransationData, function (key, obj) {
-                            var $tr = $('<tr>').append(
-                                $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
-                                $('<td>').text(obj.Folio.name),
-                                $('<td>').text(obj.Applicant_1.name),
-                                $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
-                            );
-                            $el.append($tr);
-                            setTimeout(function () {
-                                $('.foliosearchdiv').show();
-                                $('.loader-main').hide();
-                                $('.formdiv').hide();
-                                $("#errorTab").hide();
-                            }, 1000);
-                        });
-                    } else {
-                        $("#innerErrorTab").text("No Data Found!");
-                        $('.foliosearchdiv').hide();
-                        $('.loader-main').hide();
-                        $("#errorTab").show();
+                    
+                    if (!finalJSON4.statusMessage || !finalJSON4.statusMessage.data || finalJSON4.statusMessage.data.length === 0) {
+                        throw new Error("No data found");
                     }
+                    var contactID = finalJSON4.statusMessage.data[0].id;
+                    fetchTransactionsByContactId(contactID);
                 }).catch(function (err) {
                     $("#innerErrorTab").text("Valid transaction data against this email is not found!");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
                     // console.log(err);
-
                 });
             } else if (searchby == 'pan') {
                 var pan = $("#pan").val();
@@ -290,58 +368,10 @@
                     }
 
                     if (!finalJSON4.statusMessage || !finalJSON4.statusMessage.data || finalJSON4.statusMessage.data.length === 0) {
-                        console.error("[DEBUG PAN Search] No data found in response. finalJSON4 =", finalJSON4);
                         throw new Error("No data found");
                     }
                     var contactID = finalJSON4.statusMessage.data[0].id;
-                    var reqObj5 = {
-                        url: 'https://www.zohoapis.in/crm/v2/Deals/search?criteria=((Applicant_1:equals:' + contactID + '))',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        data: {},
-                        type: 'GET',
-                        postBody: {},
-                        connectionLinkName: "getdataforsearch"
-                    }
-                    ZOHODESK.request(reqObj5).then(function (response) {
-                        console.log("[DEBUG Transaction Search] Raw Response:", response);
-                        var json5 = JSON.parse(response);
-                        var finalJSON5 = JSON.parse(json5.response);
-                        console.log("[DEBUG Transaction Search] Parsed response body:", finalJSON5);
-
-                        var allTransationData = finalJSON5.statusMessage ? finalJSON5.statusMessage.data : (finalJSON5.data ? finalJSON5.data : []);
-                        var $el = $("#myTable tbody");
-                        $el.empty();
-                        if (allTransationData && allTransationData.length != 0) {
-                            $.each(allTransationData, function (key, obj) {
-                                var $tr = $('<tr>').append(
-                                    $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
-                                    $('<td>').text(obj.Folio.name),
-                                    $('<td>').text(obj.Applicant_1.name),
-                                    $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
-                                );
-                                $el.append($tr);
-                                setTimeout(function () {
-                                    $('.foliosearchdiv').show();
-                                    $('.loader-main').hide();
-                                    $('.formdiv').hide();
-                                    $("#errorTab").hide();
-                                }, 1000);
-                            });
-                        } else {
-                            $("#innerErrorTab").text("No Data Found! The Contact was found, but it has no Related Transaction Details in CRM.");
-                            $('.foliosearchdiv').hide();
-                            $('.loader-main').hide();
-                            $("#errorTab").show();
-                        }
-                    }).catch(function (err) {
-                        $("#innerErrorTab").text("No Data Found!");
-                        $('.foliosearchdiv').hide();
-                        $('.loader-main').hide();
-                        $("#errorTab").show();
-                        // console.log(err);
-                    });
+                    fetchTransactionsByContactId(contactID);
                 }).catch(function (err) {
                     $("#innerErrorTab").text("Valid transaction data against this PAN is not found!");
                     $('.foliosearchdiv').hide();
@@ -370,51 +400,7 @@
                         var $el = $("#myTable tbody");
                         $el.empty();
                         $.each(allContact, function (ckey, cobj) {
-                            var reqObj5 = {
-                                url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1:equals:' + cobj.id + '))',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                data: {},
-                                type: 'GET',
-                                postBody: {},
-                                connectionLinkName: "getdataforsearch"
-                            }
-                            ZOHODESK.request(reqObj5).then(function (response) {
-                                var json5 = JSON.parse(response);
-                                var finalJSON5 = JSON.parse(json5.response);
-                                var allTransationData = finalJSON5.statusMessage.data;
-                                console.log(allTransationData);
-                                if (allTransationData && allTransationData.length != 0) {
-                                    $.each(allTransationData, function (key, obj) {
-                                        var $tr = $('<tr>').append(
-                                            $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
-                                            $('<td>').text(obj.Folio.name),
-                                            $('<td>').text(obj.Applicant_1.name),
-                                            $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
-                                        );
-                                        $el.append($tr);
-                                        setTimeout(function () {
-                                            $('.foliosearchdiv').show();
-                                            $('.loader-main').hide();
-                                            $('.formdiv').hide();
-                                            $("#errorTab").hide();
-                                        }, 1000);
-                                    });
-                                } else {
-                                    $("#innerErrorTab").text("No Data Found!");
-                                    $('.foliosearchdiv').hide();
-                                    $('.loader-main').hide();
-                                    $("#errorTab").show();
-                                }
-                            }).catch(function (err) {
-                                $("#innerErrorTab").text("No Data Found!");
-                                $('.foliosearchdiv').hide();
-                                $('.loader-main').hide();
-                                $("#errorTab").show();
-                                // console.log(err);
-
-                            });
+                            fetchTransactionsByContactId(cobj.id);
                         });
                     }
                 }).catch(function (err) {
@@ -445,52 +431,7 @@
                         var $el = $("#myTable tbody");
                         $el.empty();
                         $.each(allContact, function (ckey, cobj) {
-                            var reqObj5 = {
-                                url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1:equals:' + cobj.id + '))',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                data: {},
-                                type: 'GET',
-                                postBody: {},
-                                connectionLinkName: "getdataforsearch"
-                            }
-                            ZOHODESK.request(reqObj5).then(function (response) {
-                                var json5 = JSON.parse(response);
-                                var finalJSON5 = JSON.parse(json5.response);
-                                var allTransationData = finalJSON5.statusMessage.data;
-                                console.log(allTransationData);
-                                if (allTransationData && allTransationData.length != 0) {
-                                    $.each(allTransationData, function (key, obj) {
-                                        var $tr = $('<tr>').append(
-                                            $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
-                                            $('<td>').text(obj.Folio.name),
-                                            $('<td>').text(obj.Applicant_1.name),
-                                            $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
-                                        );
-                                        $el.append($tr);
-                                        setTimeout(function () {
-                                            $('.foliosearchdiv').show();
-                                            $('.loader-main').hide();
-                                            $('.formdiv').hide();
-                                            $("#errorTab").hide();
-                                        }, 1000);
-
-                                    });
-                                } else {
-                                    $("#innerErrorTab").text("No Data Found!");
-                                    $('.foliosearchdiv').hide();
-                                    $('.loader-main').hide();
-                                    $("#errorTab").show();
-                                }
-                            }).catch(function (err) {
-                                $("#innerErrorTab").text("No Data Found!");
-                                $('.foliosearchdiv').hide();
-                                $('.loader-main').hide();
-                                $("#errorTab").show();
-                                // console.log(err);
-
-                            });
+                            fetchTransactionsByContactId(cobj.id);
                         });
                     }
                 }).catch(function (err) {
