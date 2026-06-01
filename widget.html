@@ -209,13 +209,13 @@
                         $("#errorTab").show();
                         $('.foliosearchdiv').hide();
                         $('.loader-main').hide();
-                        console.log(err);
+                        // console.log(err);
                     });
                 }).catch(function (err) {
                     $("#innerErrorTab").text("Folio number not found! Please try with valid Folio Number.");
                     $("#errorTab").show();
                     $('.loader-main').hide();
-                    console.log(err);
+                    // console.log(err);
 
                 });
             } else if (searchby == 'email') {
@@ -263,7 +263,7 @@
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    console.log(err);
+                    // console.log(err);
 
                 });
             } else if (searchby == 'pan') {
@@ -279,9 +279,18 @@
                     connectionLinkName: "getdataforsearch"
                 }
                 ZOHODESK.request(reqObj).then(function (response) {
+                    console.log("[DEBUG PAN Search] Raw Response:", response);
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
+                    console.log("[DEBUG PAN Search] Parsed response body:", finalJSON4);
+                    
+                    if (finalJSON4 && !finalJSON4.statusMessage && finalJSON4.data) {
+                        console.log("[DEBUG PAN Search] Found 'data' directly. Assigning to statusMessage.data");
+                        finalJSON4.statusMessage = { data: finalJSON4.data };
+                    }
+
                     if (!finalJSON4.statusMessage || !finalJSON4.statusMessage.data || finalJSON4.statusMessage.data.length === 0) {
+                        console.error("[DEBUG PAN Search] No data found in response. finalJSON4 =", finalJSON4);
                         throw new Error("No data found");
                     }
                     var contactID = finalJSON4.statusMessage.data[0].id;
@@ -296,9 +305,12 @@
                         connectionLinkName: "getdataforsearch"
                     }
                     ZOHODESK.request(reqObj5).then(function (response) {
+                        console.log("[DEBUG Transaction Search] Raw Response:", response);
                         var json5 = JSON.parse(response);
                         var finalJSON5 = JSON.parse(json5.response);
-                        var allTransationData = finalJSON5.statusMessage.data;
+                        console.log("[DEBUG Transaction Search] Parsed response body:", finalJSON5);
+                        
+                        var allTransationData = finalJSON5.statusMessage ? finalJSON5.statusMessage.data : (finalJSON5.data ? finalJSON5.data : []);
                         var $el = $("#myTable tbody");
                         $el.empty();
                         if (allTransationData && allTransationData.length != 0) {
@@ -318,7 +330,7 @@
                                 }, 1000);
                             });
                         } else {
-                            $("#innerErrorTab").text("No Data Found!");
+                            $("#innerErrorTab").text("No Data Found! The Contact was found, but it has no Related Transaction Details in CRM.");
                             $('.foliosearchdiv').hide();
                             $('.loader-main').hide();
                             $("#errorTab").show();
@@ -328,14 +340,14 @@
                         $('.foliosearchdiv').hide();
                         $('.loader-main').hide();
                         $("#errorTab").show();
-                        console.log(err);
+                        // console.log(err);
                     });
                 }).catch(function (err) {
                     $("#innerErrorTab").text("Valid transaction data against this PAN is not found!");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    console.log(err);
+                    // console.log(err);
                 });
             } else if (searchby == 'phone') {
                 var phone = $("#phone").val();
@@ -400,7 +412,7 @@
                                 $('.foliosearchdiv').hide();
                                 $('.loader-main').hide();
                                 $("#errorTab").show();
-                                console.log(err);
+                                // console.log(err);
 
                             });
                         });
@@ -410,7 +422,7 @@
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    console.log(err);
+                    // console.log(err);
                 });
             } else if (searchby == 'accountno') {
                 var accountno = $("#accountno").val();
@@ -476,7 +488,7 @@
                                 $('.foliosearchdiv').hide();
                                 $('.loader-main').hide();
                                 $("#errorTab").show();
-                                console.log(err);
+                                // console.log(err);
 
                             });
                         });
@@ -486,7 +498,7 @@
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    console.log(err);
+                    // console.log(err);
 
                 });
             }
@@ -652,7 +664,7 @@
             }).catch(function (err) {
                 showErrorPopup("Please select 1 Folio to insert");
                 console.log('Error');
-                console.log(err);
+                // console.log(err);
             });
         });
         $('input[name=searchby]').change(function () {
