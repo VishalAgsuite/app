@@ -283,7 +283,7 @@
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
                     console.log("[DEBUG PAN Search] Parsed response body:", finalJSON4);
-                    
+
                     if (finalJSON4 && !finalJSON4.statusMessage && finalJSON4.data) {
                         console.log("[DEBUG PAN Search] Found 'data' directly. Assigning to statusMessage.data");
                         finalJSON4.statusMessage = { data: finalJSON4.data };
@@ -295,7 +295,7 @@
                     }
                     var contactID = finalJSON4.statusMessage.data[0].id;
                     var reqObj5 = {
-                        url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1:equals:' + contactID + '))',
+                        url: 'https://www.zohoapis.in/crm/v2/Deals/search?criteria=((Applicant_1:equals:' + contactID + '))',
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -309,7 +309,7 @@
                         var json5 = JSON.parse(response);
                         var finalJSON5 = JSON.parse(json5.response);
                         console.log("[DEBUG Transaction Search] Parsed response body:", finalJSON5);
-                        
+
                         var allTransationData = finalJSON5.statusMessage ? finalJSON5.statusMessage.data : (finalJSON5.data ? finalJSON5.data : []);
                         var $el = $("#myTable tbody");
                         $el.empty();
