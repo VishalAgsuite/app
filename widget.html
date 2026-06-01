@@ -145,6 +145,7 @@
 
         // Function to fetch Deals (Folios) for a Contact, and then fetch the Transactions for those Deals
         function fetchTransactionsByContactId(contactID) {
+            console.log("[DEBUG] Fetching Deals for Contact ID:", contactID);
             var reqObj = {
                 url: 'https://www.zohoapis.in/crm/v2/Deals/search?criteria=((Applicant_1:equals:' + contactID + '))',
                 headers: { 'Content-Type': 'application/json' },
@@ -155,6 +156,7 @@
                 var j = JSON.parse(response);
                 var fj = JSON.parse(j.response);
                 var deals = fj.statusMessage ? fj.statusMessage.data : (fj.data ? fj.data : []);
+                console.log("[DEBUG] Deals found:", deals);
                 
                 if (deals && deals.length > 0) {
                     var $el = $("#myTable tbody");
@@ -164,6 +166,7 @@
                     
                     $.each(deals, function(index, dealObj) {
                         var dealID = dealObj.id;
+                        console.log("[DEBUG] Fetching Transactions for Deal ID:", dealID);
                         var reqTransObj = {
                             url: 'https://www.zohoapis.in/crm/v2/Deals/' + dealID + '/Transaction_Details1',
                             headers: { 'Content-Type': 'application/json' },
@@ -175,6 +178,7 @@
                             var jTrans = JSON.parse(transResponse);
                             var fjTrans = JSON.parse(jTrans.response);
                             var transData = fjTrans.statusMessage ? fjTrans.statusMessage.data : (fjTrans.data ? fjTrans.data : []);
+                            console.log("[DEBUG] Transactions for Deal " + dealID + ":", transData);
                             
                             if (transData && transData.length > 0) {
                                 $.each(transData, function (key, obj) {
@@ -212,6 +216,7 @@
                             }
                         }).catch(function(err) {
                             requestsCompleted++;
+                            console.error("[DEBUG] Error fetching transactions for deal " + dealID, err);
                             if (requestsCompleted === deals.length && transactionsFound === 0) {
                                 $("#innerErrorTab").text("No Data Found! Could not load Transactions for these Deals.");
                                 $('.foliosearchdiv').hide();
@@ -228,12 +233,14 @@
                         });
                     });
                 } else {
+                    console.log("[DEBUG] No Deals found for Contact ID", contactID);
                     $("#innerErrorTab").text("No Data Found! The Contact has no Deals (Folios) in CRM.");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
                 }
             }).catch(function (err) {
+                console.error("[DEBUG] Error fetching Deals for Contact", err);
                 $("#innerErrorTab").text("Failed to fetch Deals for this Contact.");
                 $('.foliosearchdiv').hide();
                 $('.loader-main').hide();
