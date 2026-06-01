@@ -295,7 +295,7 @@
                     }
                     var contactID = finalJSON4.statusMessage.data[0].id;
                     var reqObj5 = {
-                        url: 'https://www.zohoapis.in/crm/v2/Contacts/' + contactID + '/Related_Transaction_Details',
+                        url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1:equals:' + contactID + '))',
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -371,7 +371,7 @@
                         $el.empty();
                         $.each(allContact, function (ckey, cobj) {
                             var reqObj5 = {
-                                url: 'https://www.zohoapis.in/crm/v2/Contacts/' + cobj.id + '/Related_Transaction_Details',
+                                url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1:equals:' + cobj.id + '))',
                                 headers: {
                                     'Content-Type': 'application/json'
                                 },
@@ -446,7 +446,7 @@
                         $el.empty();
                         $.each(allContact, function (ckey, cobj) {
                             var reqObj5 = {
-                                url: 'https://www.zohoapis.in/crm/v2/Contacts/' + cobj.id + '/Related_Transaction_Details',
+                                url: 'https://www.zohoapis.in/crm/v2/Folio_Transaction_Details/search?criteria=((Applicant_1:equals:' + cobj.id + '))',
                                 headers: {
                                     'Content-Type': 'application/json'
                                 },
