@@ -143,7 +143,7 @@
             }
         });
 
-        // Function to fetch Deals (Folios) for a Contact, and then fetch the Transactions for those Deals
+        // Function to fetch Deals (Folios) for a Contact
         function fetchTransactionsByContactId(contactID) {
             console.log("[DEBUG] Fetching Deals for Contact ID:", contactID);
             var reqObj = {
@@ -161,77 +161,30 @@
                 if (deals && deals.length > 0) {
                     var $el = $("#myTable tbody");
                     $el.empty();
-                    var transactionsFound = 0;
-                    var requestsCompleted = 0;
 
                     $.each(deals, function (index, dealObj) {
-                        var dealID = dealObj.id;
-                        console.log("[DEBUG] Fetching Transactions for Deal ID:", dealID);
-                        var reqTransObj = {
-                            url: 'https://www.zohoapis.in/crm/v2/Deals/' + dealID + '/Transaction_Details1',
-                            headers: { 'Content-Type': 'application/json' },
-                            data: {}, type: 'GET', postBody: {}, connectionLinkName: "getdataforsearch"
-                        };
+                        var fundName = (dealObj.Fund_Name && dealObj.Fund_Name.name) ? dealObj.Fund_Name.name : 'N/A';
+                        var planType = dealObj.Plan_Type ? dealObj.Plan_Type : 'N/A';
+                        var folioName = dealObj.Folio_Number || dealObj.Deal_Name || 'N/A';
+                        var app1Name = (dealObj.Applicant_1 && dealObj.Applicant_1.name) ? dealObj.Applicant_1.name : 'N/A';
+                        var app1Id = (dealObj.Applicant_1 && dealObj.Applicant_1.id) ? dealObj.Applicant_1.id : contactID;
 
-                        ZOHODESK.request(reqTransObj).then(function (transResponse) {
-                            requestsCompleted++;
-                            var jTrans = JSON.parse(transResponse);
-                            var fjTrans = JSON.parse(jTrans.response);
-                            var transData = fjTrans.statusMessage ? fjTrans.statusMessage.data : (fjTrans.data ? fjTrans.data : []);
-                            console.log("[DEBUG] Transactions for Deal " + dealID + ":", transData);
-
-                            if (transData && transData.length > 0) {
-                                $.each(transData, function (key, obj) {
-                                    transactionsFound++;
-                                    var fundName = (obj.Fund_Name && obj.Fund_Name.name) ? obj.Fund_Name.name : 'N/A';
-                                    var planType = obj.Plan_Type ? obj.Plan_Type : 'N/A';
-                                    var folioName = (obj.Folio && obj.Folio.name) ? obj.Folio.name : (dealObj.Folio_Number || dealObj.Deal_Name || 'N/A');
-                                    var app1Name = (obj.Applicant_1 && obj.Applicant_1.name) ? obj.Applicant_1.name : 'N/A';
-                                    var app1Id = (obj.Applicant_1 && obj.Applicant_1.id) ? obj.Applicant_1.id : contactID;
-
-                                    var $tr = $('<tr>').append(
-                                        $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + app1Id + '" attrFolio="' + folioName + '" attrFundName="' + fundName + '" attrFundType="' + planType + '">'),
-                                        $('<td>').text(folioName),
-                                        $('<td>').text(app1Name),
-                                        $('<td style="cursor: pointer;" title="Plan : ' + planType + '">').text(fundName)
-                                    );
-                                    $el.append($tr);
-                                });
-                            }
-
-                            if (requestsCompleted === deals.length) {
-                                if (transactionsFound > 0) {
-                                    setTimeout(function () {
-                                        $('.foliosearchdiv').show();
-                                        $('.loader-main').hide();
-                                        $('.formdiv').hide();
-                                        $("#errorTab").hide();
-                                    }, 1000);
-                                } else {
-                                    $("#innerErrorTab").text("No Data Found! The Contact has Deals, but no Transactions.");
-                                    $('.foliosearchdiv').hide();
-                                    $('.loader-main').hide();
-                                    $("#errorTab").show();
-                                }
-                            }
-                        }).catch(function (err) {
-                            requestsCompleted++;
-                            console.error("[DEBUG] Error fetching transactions for deal " + dealID, err);
-                            if (requestsCompleted === deals.length && transactionsFound === 0) {
-                                $("#innerErrorTab").text("No Data Found! Could not load Transactions for these Deals.");
-                                $('.foliosearchdiv').hide();
-                                $('.loader-main').hide();
-                                $("#errorTab").show();
-                            } else if (requestsCompleted === deals.length) {
-                                setTimeout(function () {
-                                    $('.foliosearchdiv').show();
-                                    $('.loader-main').hide();
-                                    $('.formdiv').hide();
-                                    $("#errorTab").hide();
-                                }, 1000);
-                            }
-                        });
+                        var $tr = $('<tr>').append(
+                            $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + app1Id + '" attrFolio="' + folioName + '" attrFundName="' + fundName + '" attrFundType="' + planType + '">'),
+                            $('<td>').text(folioName),
+                            $('<td>').text(app1Name),
+                            $('<td style="cursor: pointer;" title="Plan : ' + planType + '">').text(fundName)
+                        );
+                        $el.append($tr);
                     });
+
+                    setTimeout(function () {
+                        $('.foliosearchdiv').show();
+                        $('.loader-main').hide();
+                        $('.formdiv').hide();
+                        $("#errorTab").hide();
+                    }, 1000);
+
                 } else {
                     console.log("[DEBUG] No Deals found for Contact ID", contactID);
                     $("#innerErrorTab").text("No Data Found! The Contact has no Deals (Folios) in CRM.");
@@ -273,52 +226,37 @@
                     if (!finalJSON.statusMessage || !finalJSON.statusMessage.data || finalJSON.statusMessage.data.length === 0) {
                         throw new Error("No data found");
                     }
-                    var folioCRMID = finalJSON.statusMessage.data[0].id;
-                    var reqtransationObj = {
-                        url: 'https://www.zohoapis.in/crm/v2/Deals/' + folioCRMID + '/Transaction_Details1',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        data: {},
-                        type: 'GET',
-                        postBody: {},
-                        connectionLinkName: "getdataforsearch"
-                    }
-                    ZOHODESK.request(reqtransationObj).then(function (response) {
-                        var json4 = JSON.parse(response);
-                        var finalJSON4 = JSON.parse(json4.response);
-                        var allTransationData = finalJSON4.statusMessage.data;
-                        var $el = $("#myTable tbody");
-                        $el.empty();
-                        if (allTransationData && allTransationData.length != 0) {
-                            $.each(allTransationData, function (key, obj) {
-                                var $tr = $('<tr>').append(
-                                    $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + obj.Applicant_1.id + '" attrFolio="' + obj.Folio.name + '" attrFundName="' + obj.Fund_Name.name + '" attrFundType="' + obj.Plan_Type + '">'),
-                                    $('<td>').text(obj.Folio.name),
-                                    $('<td>').text(obj.Applicant_1.name),
-                                    $('<td style="cursor: pointer;" title="Plan : ' + obj.Plan_Type + '">').text(obj.Fund_Name.name)
-                                );
-                                $el.append($tr);
-                                setTimeout(function () {
-                                    $('.foliosearchdiv').show();
-                                    $('.loader-main').hide();
-                                    $('.formdiv').hide();
-                                    $("#errorTab").hide();
-                                }, 1000);
-                            });
-                        } else {
-                            $("#innerErrorTab").text("No Data Found!");
-                            $('.foliosearchdiv').hide();
-                            $('.loader-main').hide();
-                            $("#errorTab").show();
-                        }
-                    }).catch(function (err) {
+                    var allDealsData = finalJSON.statusMessage.data;
+                    var $el = $("#myTable tbody");
+                    $el.empty();
+                    if (allDealsData && allDealsData.length != 0) {
+                        $.each(allDealsData, function (key, dealObj) {
+                            var fundName = (dealObj.Fund_Name && dealObj.Fund_Name.name) ? dealObj.Fund_Name.name : 'N/A';
+                            var planType = dealObj.Plan_Type ? dealObj.Plan_Type : 'N/A';
+                            var folioName = dealObj.Folio_Number || dealObj.Deal_Name || 'N/A';
+                            var app1Name = (dealObj.Applicant_1 && dealObj.Applicant_1.name) ? dealObj.Applicant_1.name : 'N/A';
+                            var app1Id = (dealObj.Applicant_1 && dealObj.Applicant_1.id) ? dealObj.Applicant_1.id : '';
+
+                            var $tr = $('<tr>').append(
+                                $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + app1Id + '" attrFolio="' + folioName + '" attrFundName="' + fundName + '" attrFundType="' + planType + '">'),
+                                $('<td>').text(folioName),
+                                $('<td>').text(app1Name),
+                                $('<td style="cursor: pointer;" title="Plan : ' + planType + '">').text(fundName)
+                            );
+                            $el.append($tr);
+                            setTimeout(function () {
+                                $('.foliosearchdiv').show();
+                                $('.loader-main').hide();
+                                $('.formdiv').hide();
+                                $("#errorTab").hide();
+                            }, 1000);
+                        });
+                    } else {
                         $("#innerErrorTab").text("No Data Found!");
-                        $("#errorTab").show();
                         $('.foliosearchdiv').hide();
                         $('.loader-main').hide();
-                        // console.log(err);
-                    });
+                        $("#errorTab").show();
+                    }
                 }).catch(function (err) {
                     $("#innerErrorTab").text("Folio number not found! Please try with valid Folio Number.");
                     $("#errorTab").show();
