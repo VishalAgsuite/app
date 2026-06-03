@@ -187,7 +187,7 @@
 
                 } else {
                     console.log("[DEBUG] No Deals found for Contact ID", contactID);
-                    $("#innerErrorTab").text("No Data Found! The Contact has no Deals (Folios) in CRM.");
+                    $("#innerErrorTab").text("No Data Found!");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
@@ -218,51 +218,47 @@
                 }
                 ZOHODESK.request(reqObj).then(function (response) {
                     var json1 = JSON.parse(response);
-                    console.log(json1);
-
                     var finalJSON = JSON.parse(json1.response);
-                    console.log(finalJSON);
-                    // alert('sds');
-                    if (!finalJSON.statusMessage || !finalJSON.statusMessage.data || finalJSON.statusMessage.data.length === 0) {
-                        throw new Error("No data found");
-                    }
-                    var allDealsData = finalJSON.statusMessage.data;
-                    var $el = $("#myTable tbody");
-                    $el.empty();
-                    if (allDealsData && allDealsData.length != 0) {
-                        $.each(allDealsData, function (key, dealObj) {
-                            var fundName = (dealObj.Fund_Name && dealObj.Fund_Name.name) ? dealObj.Fund_Name.name : 'N/A';
-                            var planType = dealObj.Plan_Type ? dealObj.Plan_Type : 'N/A';
-                            var folioName = dealObj.Folio_Number || dealObj.Deal_Name || 'N/A';
-                            var app1Name = (dealObj.Applicant_1 && dealObj.Applicant_1.name) ? dealObj.Applicant_1.name : 'N/A';
-                            var app1Id = (dealObj.Applicant_1 && dealObj.Applicant_1.id) ? dealObj.Applicant_1.id : '';
+                    
+                    var allDealsData = finalJSON.statusMessage ? finalJSON.statusMessage.data : (finalJSON.data ? finalJSON.data : []);
 
-                            var $tr = $('<tr>').append(
-                                $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + app1Id + '" attrFolio="' + folioName + '" attrFundName="' + fundName + '" attrFundType="' + planType + '">'),
-                                $('<td>').text(folioName),
-                                $('<td>').text(app1Name),
-                                $('<td style="cursor: pointer;" title="Plan : ' + planType + '">').text(fundName)
-                            );
-                            $el.append($tr);
-                            setTimeout(function () {
-                                $('.foliosearchdiv').show();
-                                $('.loader-main').hide();
-                                $('.formdiv').hide();
-                                $("#errorTab").hide();
-                            }, 1000);
-                        });
-                    } else {
+                    if (!allDealsData || allDealsData.length === 0) {
                         $("#innerErrorTab").text("No Data Found!");
                         $('.foliosearchdiv').hide();
                         $('.loader-main').hide();
                         $("#errorTab").show();
+                        return;
                     }
+
+                    var $el = $("#myTable tbody");
+                    $el.empty();
+                    $.each(allDealsData, function (key, dealObj) {
+                        var fundName = (dealObj.Fund_Name && dealObj.Fund_Name.name) ? dealObj.Fund_Name.name : 'N/A';
+                        var planType = dealObj.Plan_Type ? dealObj.Plan_Type : 'N/A';
+                        var folioName = dealObj.Folio_Number || dealObj.Deal_Name || 'N/A';
+                        var app1Name = (dealObj.Applicant_1 && dealObj.Applicant_1.name) ? dealObj.Applicant_1.name : 'N/A';
+                        var app1Id = (dealObj.Applicant_1 && dealObj.Applicant_1.id) ? dealObj.Applicant_1.id : '';
+
+                        var $tr = $('<tr>').append(
+                            $('<td style="padding:10px 6px 4px;">').html('<input type="radio" name="selectedTransactionDetails" value="' + app1Id + '" attrFolio="' + folioName + '" attrFundName="' + fundName + '" attrFundType="' + planType + '">'),
+                            $('<td>').text(folioName),
+                            $('<td>').text(app1Name),
+                            $('<td style="cursor: pointer;" title="Plan : ' + planType + '">').text(fundName)
+                        );
+                        $el.append($tr);
+                    });
+
+                    setTimeout(function () {
+                        $('.foliosearchdiv').show();
+                        $('.loader-main').hide();
+                        $('.formdiv').hide();
+                        $("#errorTab").hide();
+                    }, 1000);
+
                 }).catch(function (err) {
-                    $("#innerErrorTab").text("Folio number not found! Please try with valid Folio Number.");
+                    $("#innerErrorTab").text("No Data Found!");
                     $("#errorTab").show();
                     $('.loader-main').hide();
-                    // console.log(err);
-
                 });
             } else if (searchby == 'email') {
                 var email = $("#email").val();
@@ -279,18 +275,23 @@
                 ZOHODESK.request(reqObj).then(function (response) {
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
+                    
+                    var data = finalJSON4.statusMessage ? finalJSON4.statusMessage.data : (finalJSON4.data ? finalJSON4.data : []);
 
-                    if (!finalJSON4.statusMessage || !finalJSON4.statusMessage.data || finalJSON4.statusMessage.data.length === 0) {
-                        throw new Error("No data found");
+                    if (!data || data.length === 0) {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                        return;
                     }
-                    var contactID = finalJSON4.statusMessage.data[0].id;
+                    var contactID = data[0].id;
                     fetchTransactionsByContactId(contactID);
                 }).catch(function (err) {
-                    $("#innerErrorTab").text("Valid transaction data against this email is not found!");
+                    $("#innerErrorTab").text("No Data Found!");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    // console.log(err);
                 });
             } else if (searchby == 'pan') {
                 var pan = $("#pan").val();
@@ -305,27 +306,25 @@
                     connectionLinkName: "getdataforsearch"
                 }
                 ZOHODESK.request(reqObj).then(function (response) {
-                    console.log("[DEBUG PAN Search] Raw Response:", response);
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
-                    console.log("[DEBUG PAN Search] Parsed response body:", finalJSON4);
+                    
+                    var data = finalJSON4.statusMessage ? finalJSON4.statusMessage.data : (finalJSON4.data ? finalJSON4.data : []);
 
-                    if (finalJSON4 && !finalJSON4.statusMessage && finalJSON4.data) {
-                        console.log("[DEBUG PAN Search] Found 'data' directly. Assigning to statusMessage.data");
-                        finalJSON4.statusMessage = { data: finalJSON4.data };
+                    if (!data || data.length === 0) {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
+                        return;
                     }
-
-                    if (!finalJSON4.statusMessage || !finalJSON4.statusMessage.data || finalJSON4.statusMessage.data.length === 0) {
-                        throw new Error("No data found");
-                    }
-                    var contactID = finalJSON4.statusMessage.data[0].id;
+                    var contactID = data[0].id;
                     fetchTransactionsByContactId(contactID);
                 }).catch(function (err) {
-                    $("#innerErrorTab").text("Valid transaction data against this PAN is not found!");
+                    $("#innerErrorTab").text("No Data Found!");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    // console.log(err);
                 });
             } else if (searchby == 'phone') {
                 var phone = $("#phone").val();
@@ -343,20 +342,25 @@
                 ZOHODESK.request(reqObj).then(function (response) {
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
-                    var allContact = finalJSON4.statusMessage.data;
+                    var allContact = finalJSON4.statusMessage ? finalJSON4.statusMessage.data : (finalJSON4.data ? finalJSON4.data : []);
+                    
                     if (allContact && allContact.length != 0) {
                         var $el = $("#myTable tbody");
                         $el.empty();
                         $.each(allContact, function (ckey, cobj) {
                             fetchTransactionsByContactId(cobj.id);
                         });
+                    } else {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
                     }
                 }).catch(function (err) {
-                    $("#innerErrorTab").text("Valid transaction data against this phone number is not found!");
+                    $("#innerErrorTab").text("No Data Found!");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    // console.log(err);
                 });
             } else if (searchby == 'accountno') {
                 var accountno = $("#accountno").val();
@@ -373,22 +377,25 @@
                 ZOHODESK.request(reqObj).then(function (response) {
                     var json4 = JSON.parse(response);
                     var finalJSON4 = JSON.parse(json4.response);
-                    var allContact = finalJSON4.statusMessage.data;
-                    // var contactID = finalJSON4.statusMessage.data[0].id;
+                    var allContact = finalJSON4.statusMessage ? finalJSON4.statusMessage.data : (finalJSON4.data ? finalJSON4.data : []);
+                    
                     if (allContact && allContact.length != 0) {
                         var $el = $("#myTable tbody");
                         $el.empty();
                         $.each(allContact, function (ckey, cobj) {
                             fetchTransactionsByContactId(cobj.id);
                         });
+                    } else {
+                        $("#innerErrorTab").text("No Data Found!");
+                        $('.foliosearchdiv').hide();
+                        $('.loader-main').hide();
+                        $("#errorTab").show();
                     }
                 }).catch(function (err) {
-                    $("#innerErrorTab").text("Valid transaction data against this bank account number is not found!");
+                    $("#innerErrorTab").text("No Data Found!");
                     $('.foliosearchdiv').hide();
                     $('.loader-main').hide();
                     $("#errorTab").show();
-                    // console.log(err);
-
                 });
             }
         });
